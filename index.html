@@ -5,7 +5,10 @@
 		<script src="../ext-4.0.2a/ext-all-debug.js" type="text/javascript" charset="utf-8"></script>
 		<script type="text/javascript">
 		    Ext.onReady(function(){
-				Ext.get('mydiv').appendChild('<b>Texto loaded...</b>');
+				Ext.get('mydiv').createChild({
+					tag : 'b',
+					html: 'Datos'
+				});
 			});
 		</script>
 	</head>
