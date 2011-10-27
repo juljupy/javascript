@@ -1,8 +1,15 @@
 Ext.QuickTips.init();
 
 Ext.onReady(function(){
+	Ext.apply(Ext.QuickTips.getQuickTip(), {
+        maxWidth: 200,
+        minWidth: 100,
+        showDelay: 50,      // Show 50ms after entering target
+        trackMouse: true,
+        anchor: 'right'
+    });
 
-	var panOr = new Ext.Panel({
+    var panOr = new Ext.Panel({
 		title : 'Oriente',
 		html  : 'Panel',
 		region: 'east',
@@ -10,16 +17,84 @@ Ext.onReady(function(){
 		width : 150
 	});
 
-    //grid del panel registrados
-    var gridRegs = new Ext.grid.GridPanel({
+    //Formulario para guardar y editar los datos del grid
+    var formRegs = new Ext.form.FormPanel({
+        title : 'Creación y Edición de Registros',
+        collapsible : true,
+        collapsed : true,
+        frame : true,
         style : {
             margin : '10px'
         },
+        bodyStyle: 'padding:10px;',
+        labelAlign:'top',
+        autoHeight:true,
+        items : [{
+            layout   : 'column',
+            border   : false,
+            defaults : {
+               border : false,
+               layout     : 'form'
+            },
+            items  : [{
+                columnWidth: .5,
+                defaults   : {
+                    anchor : '95%',
+                    msgTarget:'side'
+                },
+                items      : [{
+                    xtype     : 'textfield',
+                    fieldLabel: 'Nombre',
+                    name      : 'nombre',
+                    allowBlank:false
+                },{
+                    xtype     : 'textfield',
+                    fieldLabel: 'Dirección',
+                    name      : 'direccion'
+                }]
+            },{
+                columnWidth: .5,
+                defaults   : {
+                    anchor : '95%',
+                    msgTarget:'side'
+                },
+                items      : [{
+                    xtype     : 'textfield',
+                    fieldLabel:'Apellido',
+                    name      : 'apellido',
+                    allowBlank:false
+                },{
+                    xtype     : 'textfield',
+                    fieldLabel:'Teléfono',
+                    name      : 'telefono'
+                }]
+            }]
+        }],
+        buttonAlign : 'center',
+        buttons : [{
+            text  : 'Guardar'
+        },{
+            text  : 'Limpiar',
+            handler : function(){
+                formRegs.form.reset();
+            }
+        }]
+    });
+
+    //grid del panel registrados
+    var gridRegs = new Ext.grid.GridPanel({
         title : 'Registrados',
+        style : {
+            margin : '10px'
+        },
         tbar  : [{
             text : 'Nuevo'
         },'-',{
-            text : 'Modificar'
+            text : 'Modificar',
+            handler : function(){
+                var record = gridRegs.getSelectionModel().getSelected();
+                (record) ? formRegs.form.loadRecord(record) : Ext.MessageBox.alert('Error','No hay ningún registro seleccionado');
+            }
         },'-',{
             text : 'Eliminar'
         }],
@@ -34,7 +109,7 @@ Ext.onReady(function(){
         viewConfig:{
             forceFit:true
         },
-        height: 400,
+        height: 300,
         autoScroll : true,
         //autoHeight: true, //Crecimiento automático del grid
         columns: [{
@@ -43,22 +118,16 @@ Ext.onReady(function(){
         },{
             header : 'Apellido',
             dataIndex : 'apellido'
-        },{
-            header : 'Dirección',
-            dataIndex:'direccion'
-        },{
-            header  : 'Teléfono',
-            dataIndex:'telefono'
         }]
     });
 
 	new Ext.Viewport({
 		layout : 'border',
 		items : [{
-			title : 'Agenda',
-			region: 'center',
+			title  : 'Agenda',
+			region : 'center',
 			margins: '5 0 5 0',
-			items : [gridRegs]
+			items  : [formRegs,gridRegs]
 		},{
 			title : 'Norte',
 			border: false,
