@@ -1,4 +1,5 @@
 Ext.QuickTips.init();
+
 var dataForm = [{
 	nombre  : 'Julio',
 	apellido: 'de Hoyos',
