@@ -1,22 +1,5 @@
 Ext.QuickTips.init();
 
-var dataForm = [{
-	nombre  : 'Julio',
-	apellido: 'de Hoyos',
-	email   : 'juljupy@gmail.com'
-},{
-	nombre  : 'Elkin',
-	apellido: 'Barreto',
-	email   : 'elkin.barreto@gmail.com'
-},{
-	nombre  : 'Victor',
-	apellido: 'Garcia',
-	email   : 'victorgarcia@gmail.com'
-},{
-	nombre : 'Amir',
-	apellido: 'Salgado',
-	email   : 'amirsalgado@gmail.com'
-}];
 Ext.onReady(function(){
 
 	var panOr = new Ext.Panel({
@@ -41,14 +24,19 @@ Ext.onReady(function(){
             text : 'Eliminar'
         }],
         store : new Ext.data.JsonStore({
-            fields : [{name : 'nombre'},{name : 'apellido'},{name : 'email'}],
-            data   : dataForm,
+            url    : 'agenda.php',
+            fields : [{name : 'nombre'},{name : 'apellido'},{name : 'direccion'},{name : 'telefono'},{name : 'id'}],
+            root   : 'datos',
+            totalProperty : 'total',   //usado para el total de registros para uso del paginado
+            baseParams: {op: 'listar'},
             autoLoad: true
         }),
         viewConfig:{
             forceFit:true
         },
-        autoHeight: true, //Crecimiento automático del grid
+        height: 400,
+        autoScroll : true,
+        //autoHeight: true, //Crecimiento automático del grid
         columns: [{
             header : 'Nombre',
             dataIndex : 'nombre'
@@ -56,8 +44,11 @@ Ext.onReady(function(){
             header : 'Apellido',
             dataIndex : 'apellido'
         },{
-            header : 'email',
-            dataIndex : 'email'
+            header : 'Dirección',
+            dataIndex:'direccion'
+        },{
+            header  : 'Teléfono',
+            dataIndex:'telefono'
         }]
     });
 
