@@ -19,16 +19,18 @@ Ext.onReady(function(){
 
     //Formulario para guardar y editar los datos del grid
     var formRegs = new Ext.form.FormPanel({
-        title : 'Creación y Edición de Registros',
+        title       : 'Creación y Edición de Registros',
+        waitMsgTarget: Ext.getBody(),
+        url         : 'agenda.php',
         collapsible : true,
-        collapsed : true,
-        frame : true,
-        style : {
+        //collapsed : true,
+        frame       : true,
+        style       : {
             margin : '10px'
         },
-        bodyStyle: 'padding:10px;',
-        labelAlign:'top',
-        autoHeight:true,
+        bodyStyle   : 'padding:10px;',
+        labelAlign  :'top',
+        autoHeight  :true,
         items : [{
             layout   : 'column',
             border   : false,
@@ -39,10 +41,14 @@ Ext.onReady(function(){
             items  : [{
                 columnWidth: .5,
                 defaults   : {
-                    anchor : '95%',
+                    anchor   : '95%',
                     msgTarget:'side'
                 },
                 items      : [{
+                    xtype : 'textfield',
+                    fieldLabel:'id de la persona',
+                    name  : 'id'
+                },{
                     xtype     : 'textfield',
                     fieldLabel: 'Nombre',
                     name      : 'nombre',
@@ -72,7 +78,30 @@ Ext.onReady(function(){
         }],
         buttonAlign : 'center',
         buttons : [{
-            text  : 'Guardar'
+            text    : 'Guardar',
+            handler : function(){
+                var formulario = formRegs.form;
+                if(formulario.isValid()){ //validamos el formulario
+                    formulario.submit({   //enviamos los datos al servidor
+                       waitMsg : 'Guardando datos...',  //mensaje a mostrar en el proceso de guardado
+                       params : {op:'insertar'},  //parámetro para envío de datos
+                       success: function(form,action){    // Cuando se establece la conexión con efectividad con el servidor
+                           var resp = Ext.decode(action.response.responseText);  //conversión de la respuesta a formato JSON
+                           //limpieza del formulario
+                           if(resp.success){
+                               formulario.reset();
+                               //recarga de datos del grid
+                               gridRegs.store.load();
+                           }else{
+                               Ext.MessageBox.alert('Error','Ocurrió un error en el server, por favor revise');
+                           }
+                       },
+                       failure: function(form,action){ //Cuando hay fallas en la conexión con el servidor
+                           Ext.MessageBox.alert('Error!!!',action.response.responseText);
+                       }
+                    });
+                }
+            }
         },{
             text  : 'Limpiar',
             handler : function(){
@@ -92,8 +121,8 @@ Ext.onReady(function(){
         },'-',{
             text : 'Modificar',
             handler : function(){
-                var record = gridRegs.getSelectionModel().getSelected();
-                (record) ? formRegs.form.loadRecord(record) : Ext.MessageBox.alert('Error','No hay ningún registro seleccionado');
+                var record = gridRegs.getSelectionModel().getSelected();  //captura de datos seleccionados
+                (record) ? formRegs.form.loadRecord(record) : Ext.MessageBox.alert('Error','No hay ningún registro seleccionado'); //verifica si está seleccionado un
             }
         },'-',{
             text : 'Eliminar'
@@ -118,16 +147,23 @@ Ext.onReady(function(){
         },{
             header : 'Apellido',
             dataIndex : 'apellido'
+        },{
+            header : 'Dirección',
+            dataIndex : 'direccion'
+        },{
+            header : 'Teléfono',
+            dataIndex : 'telefono'
         }]
     });
 
 	new Ext.Viewport({
 		layout : 'border',
 		items : [{
-			title  : 'Agenda',
-			region : 'center',
-			margins: '5 0 5 0',
-			items  : [formRegs,gridRegs]
+			title     : 'Agenda',
+			region    : 'center',
+			margins   : '5 0 5 0',
+            autoScroll: true,
+			items     : [formRegs,gridRegs]
 		},{
 			title : 'Norte',
 			border: false,
