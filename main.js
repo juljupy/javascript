@@ -9,6 +9,9 @@ Ext.onReady(function(){
         anchor: 'right'
     });
 
+    //Variable para identificar el parámetro de envío del formulario
+    var opForm = '';
+
     var panOr = new Ext.Panel({
 		title : 'Oriente',
 		html  : 'Panel',
@@ -20,14 +23,11 @@ Ext.onReady(function(){
     //Formulario para guardar y editar los datos del grid
     var formRegs = new Ext.form.FormPanel({
         title       : 'Creación y Edición de Registros',
+        header       : false,
         waitMsgTarget: Ext.getBody(),
         url         : 'agenda.php',
         collapsible : true,
         //collapsed : true,
-        frame       : true,
-        style       : {
-            margin : '10px'
-        },
         bodyStyle   : 'padding:10px;',
         labelAlign  :'top',
         autoHeight  :true,
@@ -45,18 +45,20 @@ Ext.onReady(function(){
                     msgTarget:'side'
                 },
                 items      : [{
-                    xtype : 'textfield',
-                    fieldLabel:'id de la persona',
-                    name  : 'id'
+                    xtype : 'hidden',
+                    name  : 'id',
+                    tabIndex : 1
                 },{
                     xtype     : 'textfield',
                     fieldLabel: 'Nombre',
                     name      : 'nombre',
-                    allowBlank:false
+                    allowBlank:false,
+                    tabIndex : 2
                 },{
                     xtype     : 'textfield',
                     fieldLabel: 'Dirección',
-                    name      : 'direccion'
+                    name      : 'direccion',
+                    tabIndex  : 4
                 }]
             },{
                 columnWidth: .5,
@@ -68,15 +70,28 @@ Ext.onReady(function(){
                     xtype     : 'textfield',
                     fieldLabel:'Apellido',
                     name      : 'apellido',
-                    allowBlank:false
+                    allowBlank:false,
+                    tabIndex  : 3
                 },{
-                    xtype     : 'textfield',
+                    xtype     : 'numberfield',
                     fieldLabel:'Teléfono',
-                    name      : 'telefono'
+                    name      : 'telefono',
+                    tabIndex  : 5
                 }]
             }]
-        }],
-        buttonAlign : 'center',
+        }]
+    });
+
+    var winform = new Ext.Window({
+        title      : '',
+        width      : 400,
+        autoHeight : true,
+        modal      : true,
+        layout     : 'fit',
+        border     : false,
+        closeAction: 'hide',
+        closable   : false,
+        items      : [formRegs],
         buttons : [{
             text    : 'Guardar',
             handler : function(){
@@ -84,11 +99,12 @@ Ext.onReady(function(){
                 if(formulario.isValid()){ //validamos el formulario
                     formulario.submit({   //enviamos los datos al servidor
                        waitMsg : 'Guardando datos...',  //mensaje a mostrar en el proceso de guardado
-                       params : {op:'insertar'},  //parámetro para envío de datos
+                       params : {op:opForm},  //parámetro para envío de datos
                        success: function(form,action){    // Cuando se establece la conexión con efectividad con el servidor
                            var resp = Ext.decode(action.response.responseText);  //conversión de la respuesta a formato JSON
                            //limpieza del formulario
                            if(resp.success){
+                               winform.hide();
                                formulario.reset();
                                //recarga de datos del grid
                                gridRegs.store.load();
@@ -103,9 +119,9 @@ Ext.onReady(function(){
                 }
             }
         },{
-            text  : 'Limpiar',
+            text  : 'Cancelar',
             handler : function(){
-                formRegs.form.reset();
+                winform.hide();
             }
         }]
     });
@@ -113,19 +129,59 @@ Ext.onReady(function(){
     //grid del panel registrados
     var gridRegs = new Ext.grid.GridPanel({
         title : 'Registrados',
+        stripeRows: true,
+        sm: new Ext.grid.RowSelectionModel({singleSelect:true}),
         style : {
             margin : '10px'
         },
         tbar  : [{
-            text : 'Nuevo'
+            text : 'Nuevo',
+            handler : function(){
+                winform.setTitle("Nueva Persona");
+                winform.show(document);
+                formRegs.form.reset();
+                opForm = 'insertar';
+            }
         },'-',{
             text : 'Modificar',
             handler : function(){
                 var record = gridRegs.getSelectionModel().getSelected();  //captura de datos seleccionados
-                (record) ? formRegs.form.loadRecord(record) : Ext.MessageBox.alert('Error','No hay ningún registro seleccionado'); //verifica si está seleccionado un
+                opForm = 'modificar';
+                if(record){
+                    winform.setTitle("Modificando "+Ext.util.Format.uppercase(record.data.nombre+" "+record.data.apellido));
+                    formRegs.form.loadRecord(record);
+                    winform.show(document);
+                }else{
+                    Ext.MessageBox.alert('Error','No hay ningún registro seleccionado');
+                } //verifica si está seleccionado un
             }
         },'-',{
-            text : 'Eliminar'
+            text   : 'Eliminar',
+            handler: function(){
+                var record = gridRegs.getSelectionModel().getSelected();  //captura de datos seleccionados
+                if(record){
+                   Ext.MessageBox.confirm("Eliminar","Desea realmente eliminar la persona "+Ext.util.Format.uppercase(record.data.nombre +" "+record.data.apellido),function(opBtn){
+                       if(opBtn == "yes"){
+                           Ext.getBody().mask("Eliminando datos...","x-mask-loading");
+                           Ext.Ajax.request({
+                               url    : 'agenda.php',
+                               params : {op:'eliminar',id_el: record.data.id},
+                               success: function(action){
+                                   gridRegs.store.load();
+                                   Ext.getBody().unmask();
+                               },
+                               failure: function(action){
+                                   Ext.MessageBox.alert("Error!!","OJO algo pasó revise bien!!!");
+                                   Ext.getBody().unmask();
+                               }
+                           });
+                       }
+                   });
+                }else{
+                    Ext.MessageBox.alert('Error','No hay ningún registro seleccionado');
+                } //verifica si está seleccionado un
+
+            }
         }],
         store : new Ext.data.JsonStore({
             url    : 'agenda.php',
@@ -163,7 +219,7 @@ Ext.onReady(function(){
 			region    : 'center',
 			margins   : '5 0 5 0',
             autoScroll: true,
-			items     : [formRegs,gridRegs]
+			items     : [gridRegs]
 		},{
 			title : 'Norte',
 			border: false,

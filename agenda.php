@@ -6,7 +6,7 @@
  * Time: 11:01
  * To change this template use File | Settings | File Templates.
  */
-
+//include('firephp/lib/FirePHPCore/fb.php');
 
 $conex = mysql_connect(); //Conexión al server
 mysql_select_db('agenda',$conex); //Conexión a la base de datos
@@ -64,7 +64,7 @@ function insertaPer(){
     }
     $fields = implode(',',$fieldAr);
     $values = implode(',',$valueAr);
-    $sql = "insert into personas ($fields) values ($values)";
+    $sql = "INSERT INTO personas ($fields) VALUES ($values)";
     try{
         mysql_query($sql);
         echo "{success:true,'msg':\"Registro guardado con &eacute;xito.\"}";
@@ -83,14 +83,40 @@ function insertaPer(){
  * función para modificar personas de la bd
  **/
 function modificaPer(){
+    $firephp = FirePHP::getInstance(true);
 
+    $fieldAr = array();
+    foreach ($_POST as $field => $value) {
+        if($field != 'op'){
+            $fieldAr[] = "$field = \"".utf8_decode($value)."\"";
+        }
+    }
+    $fields = implode(',',$fieldAr);
+
+    $sql = "UPDATE personas SET $fields WHERE id = ".$_POST["id"];
+    //$firephp->info($sql);
+    try{
+        mysql_query($sql);
+        echo "{success:true,'msg':\"Registro actualizado con &eacute;xito.\"}";
+    }catch(Exception $e){
+        $errNo = $e->getMessage();
+        echo "{'success':false,'msg':\"'Contacte a su distribuidor - ".$errNo."'\"}";
+    }
+    flush();
 }
 
 /*
  * función para eliminar personas de la bd
  * */
 function eliminaPer(){
-
+   $sql = "DELETE FROM personas WHERE id=".$_POST["id_el"];
+   try{
+      mysql_query($sql);
+      echo "{success:true,'msg':\"Registro eliminado con &eacute;xito.\"}";
+   }catch(Exception $e){
+      $errNo = $e->getMessage();
+      echo "{'success':false,'msg':\"'Contacte a su distribuidor - ".$errNo."'\"}";
+   }
 }
 
 ?>
